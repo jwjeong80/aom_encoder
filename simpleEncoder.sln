@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2042
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simpleEncoder", "simpleEncoder\simpleEncoder.vcxproj", "{8A2A754A-1C7E-45D5-87A5-C2BC810F6A75}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8A2A754A-1C7E-45D5-87A5-C2BC810F6A75}.Debug|x64.ActiveCfg = Debug|x64
+		{8A2A754A-1C7E-45D5-87A5-C2BC810F6A75}.Debug|x64.Build.0 = Debug|x64
+		{8A2A754A-1C7E-45D5-87A5-C2BC810F6A75}.Debug|x86.ActiveCfg = Debug|Win32
+		{8A2A754A-1C7E-45D5-87A5-C2BC810F6A75}.Debug|x86.Build.0 = Debug|Win32
+		{8A2A754A-1C7E-45D5-87A5-C2BC810F6A75}.Release|x64.ActiveCfg = Release|x64
+		{8A2A754A-1C7E-45D5-87A5-C2BC810F6A75}.Release|x64.Build.0 = Release|x64
+		{8A2A754A-1C7E-45D5-87A5-C2BC810F6A75}.Release|x86.ActiveCfg = Release|Win32
+		{8A2A754A-1C7E-45D5-87A5-C2BC810F6A75}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {18B17D5C-38FF-4232-B4BC-101C6E84367B}
+	EndGlobalSection
+EndGlobal
