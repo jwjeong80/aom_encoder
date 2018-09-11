@@ -223,32 +223,6 @@ int aom_img_read(aom_image_t *img, FILE *file) {
 	return 1;
 }
 
-//static int encode_frame(aom_codec_ctx_t *codec, aom_image_t *img,
-//	int frame_index, int flags, AvxVideoWriter *writer) {
-//	int got_pkts = 0;
-//	aom_codec_iter_t iter = NULL;
-//	const aom_codec_cx_pkt_t *pkt = NULL;
-//	const aom_codec_err_t res =
-//		aom_codec_encode(codec, img, frame_index, 1, flags);
-//	if (res != AOM_CODEC_OK) die_codec(codec, "Failed to encode frame"); //tools_common.c
-//
-//	while ((pkt = aom_codec_get_cx_data(codec, &iter)) != NULL) { //aom_encoder.h
-//		got_pkts = 1;
-//
-//		if (pkt->kind == AOM_CODEC_CX_FRAME_PKT) {
-//			const int keyframe = (pkt->data.frame.flags & AOM_FRAME_IS_KEY) != 0;
-//			if (!aom_video_writer_write_frame(writer, (const uint8_t*)pkt->data.frame.buf,  //video_writer.h
-//				pkt->data.frame.sz,
-//				pkt->data.frame.pts)) {
-//				die_codec(codec, "Failed to write compressed frame");
-//			}
-//			printf(keyframe ? "K" : ".");
-//			fflush(stdout);
-//		}
-//	}
-//
-//	return got_pkts;
-//}
 
 static int encode_frame(aom_codec_ctx_t *codec, aom_image_t *img,
 	int frame_index, int flags, FILE *outfile) {
@@ -286,7 +260,6 @@ int main(int argc, char **argv) {
 	aom_image_t raw;
 	aom_codec_err_t res;
 	AvxVideoInfo info;
-	//AvxVideoWriter *writer = NULL;
 	const AvxInterface *encoder = NULL;
 	const int fps = 30;
 	const int bitrate = 200;
@@ -360,14 +333,11 @@ int main(int argc, char **argv) {
 	cfg.g_usage = 8;
 	cfg.g_error_resilient = (aom_codec_er_flags_t)strtoul(argv[7], NULL, 0);
 
-	//writer = aom_video_writer_open(outfile_arg, kContainerIVF, &info); //video_writer.h 
-	//if (!writer) die("Failed to open %s for writing.", outfile_arg);
+	if (!(infile = fopen(infile_arg, "rb")))
+		die("Failed to open %s for reading.", infile_arg);
 
 	if (!(outfile = fopen(outfile_arg, "wb")))
 		die("Failed to open %s for reading.", outfile_arg);
-
-	if (!(infile = fopen(infile_arg, "rb")))
-		die("Failed to open %s for reading.", infile_arg);
 
 	if (aom_codec_enc_init(&codec, encoder->codec_interface(), &cfg, 0)) //aom_encoder.h
 		die_codec(&codec, "Failed to initialize encoder");
@@ -381,7 +351,6 @@ int main(int argc, char **argv) {
 		int flags = 0;
 		if (keyframe_interval > 0 && frame_count % keyframe_interval == 0)
 			flags |= AOM_EFLAG_FORCE_KF;
-		//encode_frame(&codec, &raw, frame_count++, flags, writer);
 		encode_frame(&codec, &raw, frame_count++, flags, outfile);
 		printf("encoded_frame: %d\n", frames_encoded);
 		frames_encoded++;
@@ -389,7 +358,6 @@ int main(int argc, char **argv) {
 	}
 
 	// Flush encoder.
-	//while (encode_frame(&codec, NULL, -1, 0, writer)) continue;
 	while (encode_frame(&codec, NULL, -1, 0, outfile)) continue;
 
 	printf("\n");
@@ -399,7 +367,6 @@ int main(int argc, char **argv) {
 	aom_img_free(&raw);
 	if (aom_codec_destroy(&codec)) die_codec(&codec, "Failed to destroy codec."); //aom_codec.h
 
-	//aom_video_writer_close(writer); //video_writer.h
 	fclose(outfile);
 	printf("Process completed");
 	return EXIT_SUCCESS;
