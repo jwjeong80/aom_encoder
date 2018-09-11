@@ -104,7 +104,7 @@
 #include "aom/aom_image.h"
 #include "aom/aomcx.h"
 
-#include "common/tools_common.h"
+//#include "common/tools_common.h"
 #include "common/video_writer.h"
 
 #if _DEBUG
@@ -114,7 +114,7 @@
 
 #else
 #pragma comment(lib,"aom.lib")
-#pragma comment(lib, "aom_common_app_util.lib")
+//#pragma comment(lib, "aom_common_app_util.lib")
 #pragma comment(lib, "aom_encoder_app_util.lib")
 #endif
 
@@ -128,6 +128,79 @@ void usage_exit(void) {
 		"See comments in simple_encoder.c for more information.\n",
 		exec_name);
 	exit(EXIT_FAILURE);
+}
+
+typedef char* va_list;
+
+
+#define va_start __crt_va_start
+#define va_arg   __crt_va_arg
+#define va_end   __crt_va_end
+
+#define LOG_ERROR(label)               \
+  do {                                 \
+    const char *l = label;             \
+    va_list ap;                        \
+    va_start(ap, fmt);                 \
+    if (l) fprintf(stderr, "%s: ", l); \
+    vfprintf(stderr, fmt, ap);         \
+    fprintf(stderr, "\n");             \
+    va_end(ap);                        \
+  } while (0)
+
+void die(const char *fmt, ...) {
+	LOG_ERROR(NULL);
+	usage_exit();
+}
+
+void die_codec(aom_codec_ctx_t *ctx, const char *s) {
+	const char *detail = aom_codec_error_detail(ctx);
+
+	printf("%s: %s\n", s, aom_codec_error(ctx));
+	if (detail) printf("    %s\n", detail);
+	exit(EXIT_FAILURE);
+}
+
+static const AvxInterface aom_encoders[] = {
+	{ "av1", AV1_FOURCC, &aom_codec_av1_cx },
+};
+
+int get_aom_encoder_count(void) {
+	return sizeof(aom_encoders) / sizeof(aom_encoders[0]);
+}
+
+const AvxInterface *get_aom_encoder_by_index(int i) { return &aom_encoders[i]; }
+
+const AvxInterface *get_aom_encoder_by_name(const char *name) {
+	int i;
+
+	for (i = 0; i < get_aom_encoder_count(); ++i) {
+		const AvxInterface *encoder = get_aom_encoder_by_index(i);
+		if (strcmp(encoder->name, name) == 0) return encoder;
+	}
+
+	return NULL;
+}
+
+
+int aom_img_read(aom_image_t *img, FILE *file) {
+	int plane;
+
+	for (plane = 0; plane < 3; ++plane) {
+		unsigned char *buf = img->planes[plane];
+		const int stride = img->stride[plane];
+		const int w = aom_img_plane_width(img, plane) *
+			((img->fmt & AOM_IMG_FMT_HIGHBITDEPTH) ? 2 : 1);
+		const int h = aom_img_plane_height(img, plane);
+		int y;
+
+		for (y = 0; y < h; ++y) {
+			if (fread(buf, 1, w, file) != (size_t)w) return 0;
+			buf += stride;
+		}
+	}
+
+	return 1;
 }
 
 static int encode_frame(aom_codec_ctx_t *codec, aom_image_t *img,
