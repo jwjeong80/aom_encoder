@@ -105,21 +105,35 @@
 #include "aom/aomcx.h"
 
 //#include "common/tools_common.h"
-#include "common/video_writer.h"
+//#include "common/video_writer.h"
 
 #if _DEBUG
 #pragma comment(lib,"lib-debug/aom.lib")
-#pragma comment(lib, "lib-debug/aom_common_app_util.lib")
-#pragma comment(lib, "lib-debug/aom_encoder_app_util.lib")
+//#pragma comment(lib, "lib-debug/aom_common_app_util.lib")
+//#pragma comment(lib, "lib-debug/aom_encoder_app_util.lib")
 
 #else
 #pragma comment(lib,"aom.lib")
 //#pragma comment(lib, "aom_common_app_util.lib")
-#pragma comment(lib, "aom_encoder_app_util.lib")
+//#pragma comment(lib, "aom_encoder_app_util.lib")
 #endif
+
+#define AV1_FOURCC 0x31305641
 
 static const char *exec_name;
 using namespace std;
+
+struct AvxRational {
+	int numerator;
+	int denominator;
+};
+typedef struct {
+	uint32_t codec_fourcc;
+	int frame_width;
+	int frame_height;
+	struct AvxRational time_base;
+	unsigned int is_annexb;
+} AvxVideoInfo;
 
 void usage_exit(void) {
 	fprintf(stderr,
@@ -160,6 +174,12 @@ void die_codec(aom_codec_ctx_t *ctx, const char *s) {
 	if (detail) printf("    %s\n", detail);
 	exit(EXIT_FAILURE);
 }
+
+typedef struct AvxInterface {
+	const char *const name;
+	const uint32_t fourcc;
+	aom_codec_iface_t *(*const codec_interface)();
+} AvxInterface;
 
 static const AvxInterface aom_encoders[] = {
 	{ "av1", AV1_FOURCC, &aom_codec_av1_cx },
@@ -203,8 +223,35 @@ int aom_img_read(aom_image_t *img, FILE *file) {
 	return 1;
 }
 
+//static int encode_frame(aom_codec_ctx_t *codec, aom_image_t *img,
+//	int frame_index, int flags, AvxVideoWriter *writer) {
+//	int got_pkts = 0;
+//	aom_codec_iter_t iter = NULL;
+//	const aom_codec_cx_pkt_t *pkt = NULL;
+//	const aom_codec_err_t res =
+//		aom_codec_encode(codec, img, frame_index, 1, flags);
+//	if (res != AOM_CODEC_OK) die_codec(codec, "Failed to encode frame"); //tools_common.c
+//
+//	while ((pkt = aom_codec_get_cx_data(codec, &iter)) != NULL) { //aom_encoder.h
+//		got_pkts = 1;
+//
+//		if (pkt->kind == AOM_CODEC_CX_FRAME_PKT) {
+//			const int keyframe = (pkt->data.frame.flags & AOM_FRAME_IS_KEY) != 0;
+//			if (!aom_video_writer_write_frame(writer, (const uint8_t*)pkt->data.frame.buf,  //video_writer.h
+//				pkt->data.frame.sz,
+//				pkt->data.frame.pts)) {
+//				die_codec(codec, "Failed to write compressed frame");
+//			}
+//			printf(keyframe ? "K" : ".");
+//			fflush(stdout);
+//		}
+//	}
+//
+//	return got_pkts;
+//}
+
 static int encode_frame(aom_codec_ctx_t *codec, aom_image_t *img,
-	int frame_index, int flags, AvxVideoWriter *writer) {
+	int frame_index, int flags, FILE *outfile) {
 	int got_pkts = 0;
 	aom_codec_iter_t iter = NULL;
 	const aom_codec_cx_pkt_t *pkt = NULL;
@@ -217,11 +264,10 @@ static int encode_frame(aom_codec_ctx_t *codec, aom_image_t *img,
 
 		if (pkt->kind == AOM_CODEC_CX_FRAME_PKT) {
 			const int keyframe = (pkt->data.frame.flags & AOM_FRAME_IS_KEY) != 0;
-			if (!aom_video_writer_write_frame(writer, (const uint8_t*)pkt->data.frame.buf,  //video_writer.h
-				pkt->data.frame.sz,
-				pkt->data.frame.pts)) {
+
+			if(fwrite(pkt->data.frame.buf, 1, pkt->data.frame.sz, outfile) != pkt->data.frame.sz)
 				die_codec(codec, "Failed to write compressed frame");
-			}
+
 			printf(keyframe ? "K" : ".");
 			fflush(stdout);
 		}
@@ -233,13 +279,14 @@ static int encode_frame(aom_codec_ctx_t *codec, aom_image_t *img,
 // TODO(tomfinegan): Improve command line parsing and add args for bitrate/fps.
 int main(int argc, char **argv) {
 	FILE *infile = NULL;
+	FILE *outfile = NULL;
 	aom_codec_ctx_t codec;
 	aom_codec_enc_cfg_t cfg;
 	int frame_count = 0;
 	aom_image_t raw;
 	aom_codec_err_t res;
 	AvxVideoInfo info;
-	AvxVideoWriter *writer = NULL;
+	//AvxVideoWriter *writer = NULL;
 	const AvxInterface *encoder = NULL;
 	const int fps = 30;
 	const int bitrate = 200;
@@ -265,9 +312,9 @@ int main(int argc, char **argv) {
 	width_arg = "416";
 	height_arg = "240";
 	infile_arg = "99_BasketballPass_416x240_50.yuv";
-	outfile_arg = "test.webm";
+	outfile_arg = "test.obu";
 	keyframe_interval_arg = "30";
-	max_frames = 100;
+	max_frames = 50;
  
 	//codec_arg = argv[1];
 	//width_arg = argv[2];
@@ -313,8 +360,11 @@ int main(int argc, char **argv) {
 	cfg.g_usage = 8;
 	cfg.g_error_resilient = (aom_codec_er_flags_t)strtoul(argv[7], NULL, 0);
 
-	writer = aom_video_writer_open(outfile_arg, kContainerIVF, &info); //video_writer.h 
-	if (!writer) die("Failed to open %s for writing.", outfile_arg);
+	//writer = aom_video_writer_open(outfile_arg, kContainerIVF, &info); //video_writer.h 
+	//if (!writer) die("Failed to open %s for writing.", outfile_arg);
+
+	if (!(outfile = fopen(outfile_arg, "wb")))
+		die("Failed to open %s for reading.", outfile_arg);
 
 	if (!(infile = fopen(infile_arg, "rb")))
 		die("Failed to open %s for reading.", infile_arg);
@@ -331,14 +381,16 @@ int main(int argc, char **argv) {
 		int flags = 0;
 		if (keyframe_interval > 0 && frame_count % keyframe_interval == 0)
 			flags |= AOM_EFLAG_FORCE_KF;
-		encode_frame(&codec, &raw, frame_count++, flags, writer);
+		//encode_frame(&codec, &raw, frame_count++, flags, writer);
+		encode_frame(&codec, &raw, frame_count++, flags, outfile);
 		printf("encoded_frame: %d\n", frames_encoded);
 		frames_encoded++;
 		if (max_frames > 0 && frames_encoded >= max_frames) break;
 	}
 
 	// Flush encoder.
-	while (encode_frame(&codec, NULL, -1, 0, writer)) continue;
+	//while (encode_frame(&codec, NULL, -1, 0, writer)) continue;
+	while (encode_frame(&codec, NULL, -1, 0, outfile)) continue;
 
 	printf("\n");
 	fclose(infile);
@@ -347,7 +399,8 @@ int main(int argc, char **argv) {
 	aom_img_free(&raw);
 	if (aom_codec_destroy(&codec)) die_codec(&codec, "Failed to destroy codec."); //aom_codec.h
 
-	aom_video_writer_close(writer); //video_writer.h
-
+	//aom_video_writer_close(writer); //video_writer.h
+	fclose(outfile);
+	printf("Process completed");
 	return EXIT_SUCCESS;
 }
