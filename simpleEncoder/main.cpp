@@ -272,7 +272,7 @@ int main(int argc, char **argv) {
 	const char *infile_arg = NULL;
 	const char *outfile_arg = NULL;
 	const char *keyframe_interval_arg = NULL;
-
+	
 	exec_name = argv[0];
 
 	// Clear explicitly, as simply assigning "{ 0 }" generates
@@ -297,6 +297,9 @@ int main(int argc, char **argv) {
 	//keyframe_interval_arg = argv[6];
 	//max_frames = (int)strtol(argv[8], NULL, 0);
 	argv[7] = "0";
+
+//	int frame_width = (int)strtol(width_arg, NULL, 0);
+//	int 
 
 	encoder = get_aom_encoder_by_name(codec_arg); //tools_common.h
 	if (!encoder) die("Unsupported codec.");
