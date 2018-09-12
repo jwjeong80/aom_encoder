@@ -104,36 +104,15 @@
 #include "aom/aom_image.h"
 #include "aom/aomcx.h"
 
-//#include "common/tools_common.h"
-//#include "common/video_writer.h"
-
 #if _DEBUG
 #pragma comment(lib,"lib-debug/aom.lib")
-//#pragma comment(lib, "lib-debug/aom_common_app_util.lib")
-//#pragma comment(lib, "lib-debug/aom_encoder_app_util.lib")
-
 #else
 #pragma comment(lib,"aom.lib")
-//#pragma comment(lib, "aom_common_app_util.lib")
-//#pragma comment(lib, "aom_encoder_app_util.lib")
 #endif
 
 #define AV1_FOURCC 0x31305641
 
 static const char *exec_name;
-using namespace std;
-
-struct AvxRational {
-	int numerator;
-	int denominator;
-};
-typedef struct {
-	uint32_t codec_fourcc;
-	int frame_width;
-	int frame_height;
-	struct AvxRational time_base;
-	unsigned int is_annexb;
-} AvxVideoInfo;
 
 void usage_exit(void) {
 	fprintf(stderr,
@@ -145,7 +124,6 @@ void usage_exit(void) {
 }
 
 typedef char* va_list;
-
 
 #define va_start __crt_va_start
 #define va_arg   __crt_va_arg
@@ -259,7 +237,6 @@ int main(int argc, char **argv) {
 	int frame_count = 0;
 	aom_image_t raw;
 	aom_codec_err_t res;
-	//AvxVideoInfo info;
 	const AvxInterface *encoder = NULL;
 	const int fps = 30;
 	const int bitrate = 200;
@@ -274,10 +251,6 @@ int main(int argc, char **argv) {
 	const char *keyframe_interval_arg = NULL;
 	
 	exec_name = argv[0];
-
-	// Clear explicitly, as simply assigning "{ 0 }" generates
-	// "missing-field-initializers" warning in some compilers.
-	//memset(&info, 0, sizeof(info));
 
 	//if (argc != 9) die("Invalid number of arguments");
 
@@ -304,26 +277,11 @@ int main(int argc, char **argv) {
 	encoder = get_aom_encoder_by_name(codec_arg); //tools_common.h
 	if (!encoder) die("Unsupported codec.");
 
-	//info.codec_fourcc = encoder->fourcc;
-	//info.frame_width = (int)strtol(width_arg, NULL, 0);
-	//info.frame_height = (int)strtol(height_arg, NULL, 0);
-	//info.time_base.numerator = 1;
-	//info.time_base.denominator = fps;
-
-	//if (info.frame_width <= 0 || info.frame_height <= 0 ||
-	//	(info.frame_width % 2) != 0 || (info.frame_height % 2) != 0) {
-	//	die("Invalid frame size: %dx%d", info.frame_width, info.frame_height);
-	//}
-
 	if (frame_width <= 0 || frame_height <= 0 ||
 		(frame_width % 2) != 0 || (frame_height % 2) != 0) {
 		die("Invalid frame size: %dx%d", frame_width, frame_height);
 	}
 
-	//if (!aom_img_alloc(&raw, AOM_IMG_FMT_I420, info.frame_width,
-	//	info.frame_height, 1)) {
-	//	die("Failed to allocate image.");
-	//}
 	if (!aom_img_alloc(&raw, AOM_IMG_FMT_I420, frame_width, frame_height, 1)) {
 		die("Failed to allocate image.");
 	}
@@ -336,10 +294,6 @@ int main(int argc, char **argv) {
 	res = aom_codec_enc_config_default(encoder->codec_interface(), &cfg, 0); //aom_encoder.h
 	if (res) die_codec(&codec, "Failed to get default codec config."); //tool_common.h
 
-	//cfg.g_w = info.frame_width;
-	//cfg.g_h = info.frame_height;
-	//cfg.g_timebase.num = info.time_base.numerator;
-	//cfg.g_timebase.den = info.time_base.denominator;
 	cfg.g_w = frame_width;
 	cfg.g_h = frame_height;
 	cfg.g_timebase.num = 1;
