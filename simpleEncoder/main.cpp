@@ -259,7 +259,7 @@ int main(int argc, char **argv) {
 	int frame_count = 0;
 	aom_image_t raw;
 	aom_codec_err_t res;
-	AvxVideoInfo info;
+	//AvxVideoInfo info;
 	const AvxInterface *encoder = NULL;
 	const int fps = 30;
 	const int bitrate = 200;
@@ -277,7 +277,7 @@ int main(int argc, char **argv) {
 
 	// Clear explicitly, as simply assigning "{ 0 }" generates
 	// "missing-field-initializers" warning in some compilers.
-	memset(&info, 0, sizeof(info));
+	//memset(&info, 0, sizeof(info));
 
 	//if (argc != 9) die("Invalid number of arguments");
 
@@ -298,25 +298,33 @@ int main(int argc, char **argv) {
 	//max_frames = (int)strtol(argv[8], NULL, 0);
 	argv[7] = "0";
 
-//	int frame_width = (int)strtol(width_arg, NULL, 0);
-//	int 
+	int frame_width = (int)strtol(width_arg, NULL, 0);
+	int frame_height = (int)strtol(height_arg, NULL, 0);
 
 	encoder = get_aom_encoder_by_name(codec_arg); //tools_common.h
 	if (!encoder) die("Unsupported codec.");
 
-	info.codec_fourcc = encoder->fourcc;
-	info.frame_width = (int)strtol(width_arg, NULL, 0);
-	info.frame_height = (int)strtol(height_arg, NULL, 0);
-	info.time_base.numerator = 1;
-	info.time_base.denominator = fps;
+	//info.codec_fourcc = encoder->fourcc;
+	//info.frame_width = (int)strtol(width_arg, NULL, 0);
+	//info.frame_height = (int)strtol(height_arg, NULL, 0);
+	//info.time_base.numerator = 1;
+	//info.time_base.denominator = fps;
 
-	if (info.frame_width <= 0 || info.frame_height <= 0 ||
-		(info.frame_width % 2) != 0 || (info.frame_height % 2) != 0) {
-		die("Invalid frame size: %dx%d", info.frame_width, info.frame_height);
+	//if (info.frame_width <= 0 || info.frame_height <= 0 ||
+	//	(info.frame_width % 2) != 0 || (info.frame_height % 2) != 0) {
+	//	die("Invalid frame size: %dx%d", info.frame_width, info.frame_height);
+	//}
+
+	if (frame_width <= 0 || frame_height <= 0 ||
+		(frame_width % 2) != 0 || (frame_height % 2) != 0) {
+		die("Invalid frame size: %dx%d", frame_width, frame_height);
 	}
 
-	if (!aom_img_alloc(&raw, AOM_IMG_FMT_I420, info.frame_width,
-		info.frame_height, 1)) {
+	//if (!aom_img_alloc(&raw, AOM_IMG_FMT_I420, info.frame_width,
+	//	info.frame_height, 1)) {
+	//	die("Failed to allocate image.");
+	//}
+	if (!aom_img_alloc(&raw, AOM_IMG_FMT_I420, frame_width, frame_height, 1)) {
 		die("Failed to allocate image.");
 	}
 
@@ -328,10 +336,14 @@ int main(int argc, char **argv) {
 	res = aom_codec_enc_config_default(encoder->codec_interface(), &cfg, 0); //aom_encoder.h
 	if (res) die_codec(&codec, "Failed to get default codec config."); //tool_common.h
 
-	cfg.g_w = info.frame_width;
-	cfg.g_h = info.frame_height;
-	cfg.g_timebase.num = info.time_base.numerator;
-	cfg.g_timebase.den = info.time_base.denominator;
+	//cfg.g_w = info.frame_width;
+	//cfg.g_h = info.frame_height;
+	//cfg.g_timebase.num = info.time_base.numerator;
+	//cfg.g_timebase.den = info.time_base.denominator;
+	cfg.g_w = frame_width;
+	cfg.g_h = frame_height;
+	cfg.g_timebase.num = 1;
+	cfg.g_timebase.den = fps;
 	cfg.rc_target_bitrate = bitrate;
 	cfg.g_usage = 8;
 	cfg.g_error_resilient = (aom_codec_er_flags_t)strtoul(argv[7], NULL, 0);
