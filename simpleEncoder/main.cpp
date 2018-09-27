@@ -104,10 +104,14 @@
 #include "aom/aom_image.h"
 #include "aom/aomcx.h"
 
+#if _MSC_VER
+#pragma warning(disable:4996) //#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #if _DEBUG
 #pragma comment(lib,"lib-debug/aom.lib")
 #else
-#pragma comment(lib,"aom.lib")
+#pragma comment(lib,"keti_av1.lib")
 #endif
 
 #define AV1_FOURCC 0x31305641
@@ -301,7 +305,7 @@ int main(int argc, char **argv) {
 	cfg.rc_target_bitrate = bitrate;
 	cfg.g_usage = 8;
 	cfg.g_error_resilient = (aom_codec_er_flags_t)strtoul(argv[7], NULL, 0);
-
+	
 	if (!(infile = fopen(infile_arg, "rb")))
 		die("Failed to open %s for reading.", infile_arg);
 

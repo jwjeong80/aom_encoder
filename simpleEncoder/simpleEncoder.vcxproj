@@ -125,7 +125,8 @@
       <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>E:\Project\AV1\SourceCode\Encoder_Test\simple_encoder;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
