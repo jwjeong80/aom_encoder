@@ -108,11 +108,7 @@
 #pragma warning(disable:4996) //#define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#if _DEBUG
-#pragma comment(lib,"lib-debug/aom.lib")
-#else
-#pragma comment(lib,"keti_av1.lib")
-#endif
+#pragma comment(lib,"../x64/Release/keti_av1.lib")
 
 #define AV1_FOURCC 0x31305641
 
